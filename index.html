@@ -96,7 +96,7 @@
             position: relative;
             border-radius: 20px;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.6); /* Changed to a dimmer, darker color */
             backdrop-filter: blur(20px);
             box-shadow: 
                 0 30px 60px rgba(0, 0, 0, 0.8),
@@ -126,7 +126,7 @@
             border-radius: 20px;
             z-index: -1;
             animation: holoBorder 6s ease infinite;
-            opacity: 0.7;
+            opacity: 0.3; /* Reduced opacity for a dimmer effect */
         }
 
         @keyframes holoBorder {
@@ -301,9 +301,9 @@
             // New Method: GitHub Repository Folder
             githubRepo: {
                 enabled: true, // Set to true to use GitHub
-                username: "rkareem12345", // <-- REPLACE THIS WITH YOUR USERNAME
-                repoName: "Elite-Winners-Dashboard", // <-- REPLACE THIS WITH YOUR REPO NAME
-                folderPath: "" // <-- REPLACE THIS WITH THE FOLDER NAME
+                username: "rkareem12345", 
+                repoName: "Elite-Winners-Dashboard", 
+                folderPath: "" 
             },
 
             // Method 1: Google Drive Folder (requires setup)
@@ -404,9 +404,9 @@
             }
         }
 
-        // Auto-detect local images in folder
-        async function autoDetectLocalMedia() {
-            console.log('Starting local auto-detection...');
+        // Auto-detect files from the repository's root
+        async function autoDetectFromRepoRoot() {
+            console.log('Trying to auto-detect files from repository root...');
             const commonNames = [
                 'image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg',
                 'photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg', 'photo5.jpg',
@@ -424,19 +424,17 @@
             ];
             
             const foundFiles = [];
-            const foldersToCheck = ['./', './images/', './media/', './photos/', './videos/'];
             
-            for (const folder of foldersToCheck) {
-                for (const filename of commonNames) {
-                    try {
-                        const fullPath = `${folder}${filename}`;
-                        const response = await fetch(fullPath, { method: 'HEAD' });
-                        if (response.ok) {
-                            foundFiles.push(fullPath);
-                            console.log('Found file:', fullPath);
-                        }
-                    } catch (error) {
+            for (const filename of commonNames) {
+                try {
+                    const fullPath = `./${filename}`;
+                    const response = await fetch(fullPath, { method: 'HEAD' });
+                    if (response.ok) {
+                        foundFiles.push(fullPath);
+                        console.log('Found file:', fullPath);
                     }
+                } catch (error) {
+                    console.log('File not found:', filename);
                 }
             }
             
@@ -470,8 +468,8 @@
             let foundFiles = [];
             
             try {
-                // NEW: Method 1: Try GitHub Repo
-                if (CONFIG.githubRepo.enabled && CONFIG.githubRepo.username !== "YOUR_GITHUB_USERNAME" && CONFIG.githubRepo.repoName !== "YOUR_REPOSITORY_NAME") {
+                // NEW: Method 1: Try GitHub Repo (FIXED LOGIC)
+                if (CONFIG.githubRepo.enabled) {
                     console.log('Trying GitHub Repo...');
                     foundFiles = await getGithubFiles(
                         CONFIG.githubRepo.username,
@@ -484,7 +482,15 @@
                     }
                 }
                 
-                // Method 2: Try Google Drive if enabled
+                // Method 2: Fallback to a simpler detection method
+                console.log('GitHub detection failed. Trying simpler method...');
+                foundFiles = await autoDetectFromRepoRoot();
+                if (foundFiles.length > 0) {
+                    console.log(`Found ${foundFiles.length} files with simpler detection`);
+                    return foundFiles;
+                }
+
+                // Old Methods are now fallbacks
                 if (CONFIG.googleDriveFolder.enabled && CONFIG.googleDriveFolder.apiKey !== "YOUR_GOOGLE_API_KEY") {
                     console.log('Trying Google Drive...');
                     foundFiles = await getGoogleDriveFiles(
@@ -497,7 +503,6 @@
                     }
                 }
                 
-                // Method 3: Try online folder if enabled
                 if (CONFIG.onlineFolder.enabled) {
                     console.log('Trying online folder...');
                     foundFiles = await getOnlineFolderFiles(
@@ -510,15 +515,6 @@
                     }
                 }
                 
-                // Method 4: Try local auto-detection
-                console.log('Trying local auto-detection...');
-                foundFiles = await autoDetectLocalMedia();
-                if (foundFiles.length > 0) {
-                    console.log(`Found ${foundFiles.length} local files`);
-                    return foundFiles;
-                }
-                
-                // Method 5: Fallback to manual URLs
                 if (CONFIG.manualUrls.length > 0) {
                     console.log('Using manual URL fallback...');
                     return CONFIG.manualUrls;
