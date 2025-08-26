@@ -140,11 +140,12 @@
         .media-item {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* Changed from cover to contain to show full image */
             border-radius: 20px;
             transition: all 0.8s ease;
             opacity: 0;
             transform: scale(1.1);
+            background: rgba(0, 0, 0, 0.3); /* Background for letterboxing */
         }
 
         .media-item.active {
@@ -159,8 +160,15 @@
 
         /* Video specific styles */
         video.media-item {
+            object-fit: contain; /* Changed to contain for videos too */
+        }
+
+        /* Alternative styling for cover mode - uncomment if you want to crop images */
+        /*
+        .media-item {
             object-fit: cover;
         }
+        */
 
         /* Progress indicator */
         .progress-container {
@@ -296,17 +304,18 @@
 
     <script>
         // Media files - Add your photos and videos here
-        // For photos: just add the path/URL
+        // For photos: just add the path/URL  
         // For videos: add the path/URL (supports mp4, webm, mov, etc.)
         const mediaFiles = [
-            // Example files - replace with your actual files
+            // Add your image/video URLs here - replace these examples
             "https://screenshot.googleplex.com/45cpG9adcXgv4PU.png",
             "https://screenshot.googleplex.com/kF6GUrbfVATTVUZ.png", 
             "https://screenshot.googleplex.com/44TSmfmRcWFTFAT.png"
             
-            // You can also use URLs:
-            // "https://example.com/photo.jpg",
-            // "https://example.com/video.mp4"
+            // Local files example:
+            // "./winner1.jpg",
+            // "./winner2.jpg", 
+            // "./video1.mp4"
         ];
 
         let currentIndex = 0;
@@ -325,7 +334,7 @@
 
         // Check if file is video
         function isVideoFile(url) {
-            const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+            const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m4v'];
             return videoExtensions.some(ext => url.toLowerCase().includes(ext));
         }
 
@@ -342,10 +351,15 @@
                 element.autoplay = true;
                 element.loop = true;
                 element.playsInline = true;
+                element.controls = false;
                 mediaType.textContent = 'Video';
             } else {
-                element.alt = 'Winner';
+                element.alt = 'Winner Image';
                 mediaType.textContent = 'Photo';
+                // Add crossorigin for external images
+                if (src.startsWith('http')) {
+                    element.crossOrigin = 'anonymous';
+                }
             }
             
             return element;
@@ -356,20 +370,27 @@
             if (isTransitioning || mediaFiles.length === 0) return;
 
             isTransitioning = true;
+            
+            // Clear any existing timers
+            if (countdownTimer) clearInterval(countdownTimer);
+            if (progressTimer) clearInterval(progressTimer);
+
             const mediaFile = mediaFiles[currentIndex];
+            console.log('Loading media:', mediaFile, 'Index:', currentIndex);
 
             // Create new media element
             const newMediaElement = createMediaElement(mediaFile);
             
-            // Handle loading
+            // Handle successful loading
             const handleLoad = () => {
+                console.log('Media loaded successfully:', mediaFile);
                 loadingOverlay.style.display = 'none';
                 
                 // Remove old media element
                 if (currentMediaElement) {
                     currentMediaElement.classList.add('fade-out');
                     setTimeout(() => {
-                        if (currentMediaElement.parentNode) {
+                        if (currentMediaElement && currentMediaElement.parentNode) {
                             currentMediaElement.parentNode.removeChild(currentMediaElement);
                         }
                     }, 800);
@@ -384,8 +405,23 @@
                 startCountdown();
             };
 
+            // Handle loading errors
+            const handleError = (error) => {
+                console.error('Failed to load media:', mediaFile, error);
+                loadingOverlay.innerHTML = `<div style="color: #ff0080; text-align: center;">Failed to load: ${mediaFile}<br><small>Trying next item...</small></div>`;
+                
+                // Try next media after short delay
+                setTimeout(() => {
+                    loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
+                    loadingOverlay.style.display = 'flex';
+                    isTransitioning = false;
+                    nextMedia();
+                }, 2000);
+            };
+
             // Show loading
             loadingOverlay.style.display = 'flex';
+            loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
             
             // Add to display
             mediaDisplay.appendChild(newMediaElement);
@@ -393,16 +429,26 @@
             // Handle load events
             if (newMediaElement.tagName === 'VIDEO') {
                 newMediaElement.addEventListener('canplay', handleLoad, { once: true });
-                newMediaElement.addEventListener('error', () => {
-                    console.error('Video failed to load:', mediaFile);
-                    nextMedia();
-                });
+                newMediaElement.addEventListener('error', handleError, { once: true });
+                
+                // Fallback timeout for videos
+                setTimeout(() => {
+                    if (isTransitioning && newMediaElement.readyState >= 2) {
+                        handleLoad();
+                    }
+                }, 3000);
             } else {
                 newMediaElement.addEventListener('load', handleLoad, { once: true });
-                newMediaElement.addEventListener('error', () => {
-                    console.error('Image failed to load:', mediaFile);
-                    nextMedia();
-                });
+                newMediaElement.addEventListener('error', handleError, { once: true });
+                
+                // Fallback timeout for images
+                setTimeout(() => {
+                    if (isTransitioning && newMediaElement.complete) {
+                        handleLoad();
+                    } else if (isTransitioning) {
+                        handleError('Timeout');
+                    }
+                }, 5000);
             }
         }
 
@@ -413,6 +459,8 @@
             
             countdown.textContent = timeLeft + 's';
             progressFill.style.width = '0%';
+            
+            console.log('Starting countdown for:', mediaFiles[currentIndex]);
             
             // Update every 100ms for smooth progress
             progressTimer = setInterval(() => {
@@ -438,13 +486,14 @@
         function nextMedia() {
             if (mediaFiles.length === 0) return;
             
-            // If only one file, show it again
-            if (mediaFiles.length === 1) {
-                currentIndex = 0;
-            } else {
-                currentIndex = (currentIndex + 1) % mediaFiles.length;
-            }
+            console.log('Moving to next media. Current index:', currentIndex, 'Total files:', mediaFiles.length);
             
+            // Move to next index (loops back to 0 after last item)
+            currentIndex = (currentIndex + 1) % mediaFiles.length;
+            
+            console.log('New index:', currentIndex);
+            
+            // Small delay for smooth transition
             setTimeout(() => {
                 showMedia();
             }, 500);
