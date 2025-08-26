@@ -301,8 +301,8 @@
             // New Method: GitHub Repository Folder
             githubRepo: {
                 enabled: true, // Set to true to use GitHub
-                username: "YOUR_GITHUB_USERNAME", // <-- REPLACE THIS WITH YOUR USERNAME
-                repoName: "YOUR_REPOSITORY_NAME", // <-- REPLACE THIS WITH YOUR REPO NAME
+                username: "rkareem12345", // <-- REPLACE THIS WITH YOUR USERNAME
+                repoName: "Elite-Winners-Dashboard", // <-- REPLACE THIS WITH YOUR REPO NAME
                 folderPath: "" // <-- REPLACE THIS WITH THE FOLDER NAME
             },
 
@@ -471,7 +471,7 @@
             
             try {
                 // NEW: Method 1: Try GitHub Repo
-                if (CONFIG.githubRepo.enabled && CONFIG.githubRepo.username !== "rkareem12345" && CONFIG.githubRepo.repoName !== "Elite-Winners-Dashboard") {
+                if (CONFIG.githubRepo.enabled && CONFIG.githubRepo.username !== "YOUR_GITHUB_USERNAME" && CONFIG.githubRepo.repoName !== "YOUR_REPOSITORY_NAME") {
                     console.log('Trying GitHub Repo...');
                     foundFiles = await getGithubFiles(
                         CONFIG.githubRepo.username,
