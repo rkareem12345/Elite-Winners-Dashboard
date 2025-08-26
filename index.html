@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Winners Dashboard - Elite Recognition System</title>
+    <title>Winners Gallery - Desktop Display</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&family=Audiowide&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Audiowide&display=swap');
         
         * {
             margin: 0;
@@ -21,7 +21,7 @@
             position: relative;
         }
 
-        /* Dynamic geometric background */
+        /* Animated background */
         .background {
             position: fixed;
             top: 0;
@@ -30,7 +30,6 @@
             height: 100%;
             background: radial-gradient(circle at 20% 80%, #120458 0%, transparent 50%),
                        radial-gradient(circle at 80% 20%, #1e0a3c 0%, transparent 50%),
-                       radial-gradient(circle at 40% 40%, #0d1421 0%, transparent 50%),
                        linear-gradient(135deg, #000 0%, #0a0a0a 100%);
             z-index: 1;
         }
@@ -43,327 +42,147 @@
             width: 100%;
             height: 100%;
             background-image: 
-                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
+                linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100px 100px;
             z-index: 2;
-            animation: gridPulse 4s ease-in-out infinite;
+            animation: gridFloat 8s ease-in-out infinite;
         }
 
-        @keyframes gridPulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.1; }
+        @keyframes gridFloat {
+            0%, 100% { opacity: 0.3; transform: translateY(0); }
+            50% { opacity: 0.1; transform: translateY(-10px); }
         }
 
-        /* Floating geometric shapes */
-        .geometric-shapes {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 3;
-            pointer-events: none;
-        }
-
-        .shape {
-            position: absolute;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            animation: floatShape 20s linear infinite;
-        }
-
-        .shape.triangle {
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-bottom: 25px solid rgba(255, 0, 150, 0.1);
-            border-radius: 3px;
-        }
-
-        .shape.square {
-            width: 20px;
-            height: 20px;
-            background: rgba(0, 255, 255, 0.1);
-            transform: rotate(45deg);
-        }
-
-        .shape.circle {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: rgba(150, 0, 255, 0.1);
-        }
-
-        @keyframes floatShape {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% {
-                transform: translateY(-10vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Main dashboard container */
-        .dashboard {
+        /* Main container */
+        .gallery-container {
             position: relative;
             z-index: 10;
             height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-
-        /* Header with holographic title */
-        .header {
-            padding: 2rem 0;
-            text-align: center;
-            position: relative;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ffff, #ff0080, #8000ff, transparent);
-            animation: headerLine 3s ease-in-out infinite;
-        }
-
-        @keyframes headerLine {
-            0%, 100% { opacity: 0.5; width: 80%; }
-            50% { opacity: 1; width: 95%; }
-        }
-
-        .main-title {
-            font-family: 'Audiowide', cursive;
-            font-size: 4rem;
-            font-weight: 400;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 0.3em;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            animation: titleGlow 2s ease-in-out infinite alternate;
-        }
-
-        .sub-title {
-            font-size: 1.5rem;
-            color: #00ffff;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-
-        @keyframes titleGlow {
-            0% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
-            100% { text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.3); }
-        }
-
-        /* Main content area - poster style */
-        .main-content {
-            flex: 1;
-            display: flex;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
         }
 
-        /* Winner poster card */
-        .winner-poster {
-            width: 90%;
-            max-width: 1200px;
-            height: 70vh;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(20px);
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            animation: posterEntry 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-            opacity: 0;
-            transform: translateY(100px) rotateX(20deg);
+        /* Title */
+        .title {
+            font-family: 'Audiowide', cursive;
+            font-size: 4rem;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            animation: titlePulse 3s ease-in-out infinite;
         }
 
-        @keyframes posterEntry {
-            to {
-                opacity: 1;
-                transform: translateY(0) rotateX(0deg);
+        @keyframes titlePulse {
+            0%, 100% { 
+                text-shadow: 0 0 30px rgba(255, 255, 255, 0.8); 
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 50px rgba(0, 255, 255, 1), 0 0 80px rgba(255, 255, 255, 0.6); 
+                transform: scale(1.02);
             }
         }
 
-        /* Holographic border effect */
-        .winner-poster::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #00ffff, #ff0080, #8000ff, #00ff80, #ffff00, #00ffff);
-            background-size: 400% 400%;
-            border-radius: 15px;
-            z-index: -1;
-            animation: holographicBorder 6s ease infinite;
-            opacity: 0.6;
+        /* Media display area */
+        .media-display {
+            width: 85vw;
+            height: 70vh;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: mediaEntry 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            opacity: 0;
+            transform: translateY(100px) scale(0.9);
         }
 
-        @keyframes holographicBorder {
+        @keyframes mediaEntry {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Holographic border */
+        .media-display::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, #00ffff, #ff0080, #8000ff, #00ff80, #ffff00, #00ffff);
+            background-size: 400% 400%;
+            border-radius: 20px;
+            z-index: -1;
+            animation: holoBorder 6s ease infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes holoBorder {
             0%, 100% { background-position: 0% 50%; }
             25% { background-position: 100% 50%; }
             50% { background-position: 100% 100%; }
             75% { background-position: 0% 100%; }
         }
 
-        /* Winner photo section */
-        .photo-section {
-            position: absolute;
-            left: 3rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 350px;
-            height: 450px;
-        }
-
-        .photo-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            border-radius: 10px;
-            overflow: hidden;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 128, 0.1));
-        }
-
-        .winner-photo {
+        /* Media elements */
+        .media-item {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 10px;
+            border-radius: 20px;
             transition: all 0.8s ease;
-            filter: contrast(1.1) brightness(1.1) saturate(1.2);
+            opacity: 0;
+            transform: scale(1.1);
         }
 
-        .photo-container::after {
-            content: '';
+        .media-item.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .media-item.fade-out {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        /* Video specific styles */
+        video.media-item {
+            object-fit: cover;
+        }
+
+        /* Progress indicator */
+        .progress-container {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, transparent 0%, rgba(0, 255, 255, 0.1) 50%, transparent 100%);
-            pointer-events: none;
-        }
-
-        /* Winner info section */
-        .info-section {
-            position: absolute;
-            right: 3rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 500px;
-            color: #fff;
-        }
-
-        .winner-name {
-            font-family: 'Orbitron', monospace;
-            font-size: 4.5rem;
-            font-weight: 900;
-            color: #ffffff;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 1rem;
-            line-height: 1.1;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .winner-designation {
-            font-size: 2.5rem;
-            font-weight: 600;
-            color: #00ffff;
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-        }
-
-        .achievement-details {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(10px);
-        }
-
-        .achievement-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #ff0080;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-        }
-
-        .achievement-date {
-            font-size: 1.4rem;
-            color: #8000ff;
-            font-weight: 400;
-            margin-bottom: 1rem;
-        }
-
-        .achievement-desc {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-        }
-
-        /* Stats display */
-        .stats-display {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #00ff80;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        /* Progress and countdown */
-        .progress-section {
-            position: absolute;
-            bottom: 2rem;
+            bottom: 3rem;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
             gap: 2rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .progress-bar {
             width: 400px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
             overflow: hidden;
             position: relative;
         }
@@ -371,53 +190,80 @@
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #00ffff, #ff0080, #8000ff);
-            border-radius: 4px;
+            border-radius: 3px;
             width: 0%;
-            animation: progressAnimation 10s linear infinite;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            transition: width 0.1s ease;
         }
 
-        @keyframes progressAnimation {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-
-        .countdown-display {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.5rem;
+        .progress-text {
             color: #00ffff;
+            font-size: 1.2rem;
             font-weight: 600;
-            min-width: 80px;
+            min-width: 120px;
             text-align: center;
         }
 
-        /* Transition effects */
-        .winner-poster.transition-out {
-            animation: posterExit 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+        /* Media type indicator */
+        .media-type {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ffff;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
         }
 
-        @keyframes posterExit {
-            to {
-                opacity: 0;
-                transform: translateY(-100px) rotateX(-20deg) scale(0.95);
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .media-display {
+                width: 90vw;
+                height: 65vh;
+            }
+            
+            .title {
+                font-size: 3rem;
+                margin-bottom: 2rem;
+            }
+            
+            .progress-bar {
+                width: 300px;
             }
         }
 
-        /* Scan line effect */
-        .scan-line {
+        /* Loading animation */
+        .loading-overlay {
             position: absolute;
-            top: -2px;
+            top: 0;
             left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ffff, transparent);
-            animation: scanLine 3s linear infinite;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
 
-        @keyframes scanLine {
-            0% { transform: translateY(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(70vh); opacity: 0; }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 255, 0.3);
+            border-top: 4px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -425,227 +271,210 @@
     <!-- Background layers -->
     <div class="background"></div>
     <div class="grid-overlay"></div>
-    <div class="geometric-shapes" id="geometricShapes"></div>
 
-    <div class="dashboard">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="main-title">ELITE RECOGNITION</h1>
-            <p class="sub-title">Excellence Achievement System</p>
-        </header>
+    <div class="gallery-container">
+        <!-- Title -->
+        <h1 class="title">Winners Gallery</h1>
 
-        <!-- Main content -->
-        <main class="main-content">
-            <div class="winner-poster" id="winnerPoster">
-                <div class="scan-line"></div>
-                
-                <!-- Photo section -->
-                <div class="photo-section">
-                    <div class="photo-container">
-                        <img class="winner-photo" id="winnerPhoto" src="" alt="Winner">
-                    </div>
-                </div>
-
-                <!-- Info section -->
-                <div class="info-section">
-                    <h2 class="winner-name" id="winnerName">LOADING...</h2>
-                    <p class="winner-designation" id="winnerDesignation">STAR OF THE MONTH</p>
-                    
-                    <div class="achievement-details">
-                        <h3 class="achievement-title">Achievement Unlocked</h3>
-                        <p class="achievement-date" id="achievementDate">August 2025</p>
-                        <p class="achievement-desc" id="achievementDesc">Outstanding performance and dedication to excellence in all endeavors.</p>
-                    </div>
-
-                    <div class="stats-display">
-                        <div class="stat-item">
-                            <span class="stat-number" id="statProjects">12</span>
-                            <span class="stat-label">Projects</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="statRating">9.8</span>
-                            <span class="stat-label">Rating</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="statAwards">5</span>
-                            <span class="stat-label">Awards</span>
-                        </div>
-                    </div>
-                </div>
+        <!-- Media display -->
+        <div class="media-display" id="mediaDisplay">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
             </div>
-        </main>
+            <div class="media-type" id="mediaType">Image</div>
+        </div>
 
-        <!-- Progress section -->
-        <div class="progress-section">
-            <span style="color: #00ffff; font-size: 1.2rem;">Next Recognition:</span>
+        <!-- Progress indicator -->
+        <div class="progress-container">
+            <span class="progress-text">Next in:</span>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <div class="countdown-display" id="countdownDisplay">10</div>
+            <span class="progress-text" id="countdown">10s</span>
         </div>
     </div>
 
     <script>
-        // Enhanced winner data with more details
-        const winners = [
-            {
-                name: "Abdul Kareem R",
-                photo: "https://screenshot.googleplex.com/gGWrgedzXAtpC9N.png",
-                date: "August 2025",
-                designation: "STAR OF THE MONTH",
-                description: "Exceptional leadership in project management and team coordination, delivering outstanding results consistently.",
-                stats: { projects: 15, rating: 9.8, awards: 7 }
-            }
+        // Media files - Add your photos and videos here
+        // For photos: just add the path/URL
+        // For videos: add the path/URL (supports mp4, webm, mov, etc.)
+        const mediaFiles = [
+            // Example files - replace with your actual files
+            "https://screenshot.googleplex.com/45cpG9adcXgv4PU.png",
+            "https://screenshot.googleplex.com/kF6GUrbfVATTVUZ.png", 
+            "https://screenshot.googleplex.com/44TSmfmRcWFTFAT.png"
+            
+            // You can also use URLs:
+            // "https://example.com/photo.jpg",
+            // "https://example.com/video.mp4"
         ];
 
         let currentIndex = 0;
         let countdownTimer;
+        let progressTimer;
+        let currentMediaElement = null;
         let isTransitioning = false;
+        const displayDuration = 10000; // 10 seconds
 
         // DOM elements
-        const winnerPoster = document.getElementById('winnerPoster');
-        const winnerPhoto = document.getElementById('winnerPhoto');
-        const winnerName = document.getElementById('winnerName');
-        const winnerDesignation = document.getElementById('winnerDesignation');
-        const achievementDate = document.getElementById('achievementDate');
-        const achievementDesc = document.getElementById('achievementDesc');
-        const statProjects = document.getElementById('statProjects');
-        const statRating = document.getElementById('statRating');
-        const statAwards = document.getElementById('statAwards');
+        const mediaDisplay = document.getElementById('mediaDisplay');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const mediaType = document.getElementById('mediaType');
         const progressFill = document.getElementById('progressFill');
-        const countdownDisplay = document.getElementById('countdownDisplay');
-        const geometricShapes = document.getElementById('geometricShapes');
+        const countdown = document.getElementById('countdown');
 
-        // Create floating geometric shapes
-        function createGeometricShapes() {
-            const shapes = ['triangle', 'square', 'circle'];
-            
-            setInterval(() => {
-                const shape = document.createElement('div');
-                shape.classList.add('shape', shapes[Math.floor(Math.random() * shapes.length)]);
-                shape.style.left = Math.random() * 100 + '%';
-                shape.style.animationDuration = (Math.random() * 15 + 10) + 's';
-                shape.style.animationDelay = Math.random() * 2 + 's';
-                
-                geometricShapes.appendChild(shape);
-                
-                // Remove shape after animation
-                setTimeout(() => {
-                    if (shape.parentNode) {
-                        shape.parentNode.removeChild(shape);
-                    }
-                }, 25000);
-            }, 2000);
+        // Check if file is video
+        function isVideoFile(url) {
+            const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+            return videoExtensions.some(ext => url.toLowerCase().includes(ext));
         }
 
-        // Update winner display
-        function updateWinner(winner) {
-            winnerPhoto.src = winner.photo;
-            winnerName.textContent = winner.name;
-            winnerDesignation.textContent = winner.designation;
-            achievementDate.textContent = winner.date;
-            achievementDesc.textContent = winner.description;
-            statProjects.textContent = winner.stats.projects;
-            statRating.textContent = winner.stats.rating;
-            statAwards.textContent = winner.stats.awards;
-        }
-
-        // Animate number counting
-        function animateNumber(element, target, duration = 1000) {
-            const start = 0;
-            const startTime = performance.now();
+        // Create media element
+        function createMediaElement(src) {
+            const isVideo = isVideoFile(src);
+            const element = document.createElement(isVideo ? 'video' : 'img');
             
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const current = Math.floor(start + (target - start) * progress);
-                
-                if (element === statRating) {
-                    element.textContent = (start + (target - start) * progress).toFixed(1);
-                } else {
-                    element.textContent = current;
-                }
-                
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                }
+            element.className = 'media-item';
+            element.src = src;
+            
+            if (isVideo) {
+                element.muted = true; // For autoplay to work
+                element.autoplay = true;
+                element.loop = true;
+                element.playsInline = true;
+                mediaType.textContent = 'Video';
+            } else {
+                element.alt = 'Winner';
+                mediaType.textContent = 'Photo';
             }
             
-            requestAnimationFrame(update);
+            return element;
         }
 
-        // Show winner with enhanced animations
-        function showWinner() {
-            if (isTransitioning) return;
+        // Show media with smooth transition
+        function showMedia() {
+            if (isTransitioning || mediaFiles.length === 0) return;
+
+            isTransitioning = true;
+            const mediaFile = mediaFiles[currentIndex];
+
+            // Create new media element
+            const newMediaElement = createMediaElement(mediaFile);
             
-            const winner = winners[currentIndex];
+            // Handle loading
+            const handleLoad = () => {
+                loadingOverlay.style.display = 'none';
+                
+                // Remove old media element
+                if (currentMediaElement) {
+                    currentMediaElement.classList.add('fade-out');
+                    setTimeout(() => {
+                        if (currentMediaElement.parentNode) {
+                            currentMediaElement.parentNode.removeChild(currentMediaElement);
+                        }
+                    }, 800);
+                }
+                
+                // Show new media
+                newMediaElement.classList.add('active');
+                currentMediaElement = newMediaElement;
+                isTransitioning = false;
+                
+                // Start countdown
+                startCountdown();
+            };
+
+            // Show loading
+            loadingOverlay.style.display = 'flex';
             
-            // Update winner data
-            updateWinner(winner);
+            // Add to display
+            mediaDisplay.appendChild(newMediaElement);
             
-            // Animate stats counting
-            setTimeout(() => {
-                animateNumber(statProjects, winner.stats.projects);
-                animateNumber(statRating, winner.stats.rating);
-                animateNumber(statAwards, winner.stats.awards);
-            }, 800);
-            
-            // Remove transition class if exists
-            winnerPoster.classList.remove('transition-out');
+            // Handle load events
+            if (newMediaElement.tagName === 'VIDEO') {
+                newMediaElement.addEventListener('canplay', handleLoad, { once: true });
+                newMediaElement.addEventListener('error', () => {
+                    console.error('Video failed to load:', mediaFile);
+                    nextMedia();
+                });
+            } else {
+                newMediaElement.addEventListener('load', handleLoad, { once: true });
+                newMediaElement.addEventListener('error', () => {
+                    console.error('Image failed to load:', mediaFile);
+                    nextMedia();
+                });
+            }
         }
 
-        // Start countdown
+        // Start countdown and progress
         function startCountdown() {
             let timeLeft = 10;
-            countdownDisplay.textContent = timeLeft;
+            let progressStep = 0;
             
-            // Reset progress bar
-            progressFill.style.animation = 'none';
-            progressFill.offsetHeight; // Force reflow
-            progressFill.style.animation = 'progressAnimation 10s linear forwards';
+            countdown.textContent = timeLeft + 's';
+            progressFill.style.width = '0%';
             
+            // Update every 100ms for smooth progress
+            progressTimer = setInterval(() => {
+                progressStep += 100;
+                const progressPercent = (progressStep / displayDuration) * 100;
+                progressFill.style.width = Math.min(progressPercent, 100) + '%';
+            }, 100);
+            
+            // Update countdown every second
             countdownTimer = setInterval(() => {
                 timeLeft--;
-                countdownDisplay.textContent = timeLeft;
+                countdown.textContent = timeLeft + 's';
                 
                 if (timeLeft <= 0) {
                     clearInterval(countdownTimer);
-                    nextWinner();
+                    clearInterval(progressTimer);
+                    nextMedia();
                 }
             }, 1000);
         }
 
-        // Transition to next winner
-        function nextWinner() {
-            if (isTransitioning) return;
+        // Move to next media
+        function nextMedia() {
+            if (mediaFiles.length === 0) return;
             
-            isTransitioning = true;
-            winnerPoster.classList.add('transition-out');
+            // If only one file, show it again
+            if (mediaFiles.length === 1) {
+                currentIndex = 0;
+            } else {
+                currentIndex = (currentIndex + 1) % mediaFiles.length;
+            }
             
             setTimeout(() => {
-                currentIndex = (currentIndex + 1) % winners.length;
-                showWinner();
-                isTransitioning = false;
-                startCountdown();
-            }, 1000);
+                showMedia();
+            }, 500);
         }
 
-        // Handle image load errors
-        winnerPhoto.addEventListener('error', function() {
-            this.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500&h=600&fit=crop&crop=face';
+        // Initialize gallery
+        function initialize() {
+            if (mediaFiles.length === 0) {
+                loadingOverlay.innerHTML = '<div style="color: #ff0080; text-align: center; font-size: 1.5rem;">No media files found!<br><small>Add your photos/videos to the mediaFiles array</small></div>';
+                return;
+            }
+            
+            // Start with first media after brief delay
+            setTimeout(() => {
+                showMedia();
+            }, 1500);
+        }
+
+        // Handle page visibility (pause/resume videos when tab changes)
+        document.addEventListener('visibilitychange', () => {
+            if (currentMediaElement && currentMediaElement.tagName === 'VIDEO') {
+                if (document.hidden) {
+                    currentMediaElement.pause();
+                } else {
+                    currentMediaElement.play();
+                }
+            }
         });
 
-        // Initialize dashboard
-        function initialize() {
-            createGeometricShapes();
-            
-            setTimeout(() => {
-                showWinner();
-                startCountdown();
-            }, 2000);
-        }
-
-        // Start the system
+        // Start the gallery
         initialize();
     </script>
 </body>
