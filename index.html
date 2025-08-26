@@ -29,8 +29,8 @@
             width: 100%;
             height: 100%;
             background: radial-gradient(circle at 20% 80%, #120458 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, #1e0a3c 0%, transparent 50%),
-                        linear-gradient(135deg, #000 0%, #0a0a0a 100%);
+                       radial-gradient(circle at 80% 20%, #1e0a3c 0%, transparent 50%),
+                       linear-gradient(135deg, #000 0%, #0a0a0a 100%);
             z-index: 1;
         }
 
@@ -96,7 +96,7 @@
             position: relative;
             border-radius: 20px;
             overflow: hidden;
-            background: rgba(0, 0, 0, 0.6); /* Changed to a dimmer, darker color */
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
             box-shadow: 
                 0 30px 60px rgba(0, 0, 0, 0.8),
@@ -126,7 +126,7 @@
             border-radius: 20px;
             z-index: -1;
             animation: holoBorder 6s ease infinite;
-            opacity: 0.3; /* Reduced opacity for a dimmer effect */
+            opacity: 0.7;
         }
 
         @keyframes holoBorder {
@@ -138,11 +138,14 @@
 
         /* Media elements */
         .media-item {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
             border-radius: 20px;
-            transition: all 0.8s ease;
+            transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
             opacity: 0;
             transform: scale(1.1);
             background: rgba(0, 0, 0, 0.3);
@@ -152,15 +155,10 @@
             opacity: 1;
             transform: scale(1);
         }
-
+        
         .media-item.fade-out {
             opacity: 0;
             transform: scale(0.95);
-        }
-
-        /* Video specific styles */
-        video.media-item {
-            object-fit: contain;
         }
 
         /* Progress indicator */
@@ -194,7 +192,7 @@
             border-radius: 3px;
             width: 0%;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-            transition: width 0.1s ease;
+            /* Transition will be handled by JS for smooth progress */
         }
 
         .progress-text {
@@ -204,40 +202,7 @@
             min-width: 120px;
             text-align: center;
         }
-
-        /* Media type indicator */
-        .media-type {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            background: rgba(0, 0, 0, 0.7);
-            color: #00ffff;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .media-display {
-                width: 90vw;
-                height: 65vh;
-            }
-            
-            .title {
-                font-size: 3rem;
-                margin-bottom: 2rem;
-            }
-            
-            .progress-bar {
-                width: 300px;
-            }
-        }
-
+        
         /* Loading animation */
         .loading-overlay {
             position: absolute;
@@ -251,6 +216,8 @@
             align-items: center;
             border-radius: 20px;
             backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: opacity 0.5s ease-out;
         }
 
         .loading-spinner {
@@ -282,7 +249,6 @@
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="loading-spinner"></div>
             </div>
-            <div class="media-type" id="mediaType">Image</div>
         </div>
 
         <!-- Progress indicator -->
@@ -291,407 +257,140 @@
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <span class="progress-text" id="countdown">10s</span>
+            <span class="progress-text" id="countdown">20s</span>
         </div>
     </div>
 
     <script>
-        // CONFIGURATION - Choose your method:
-        const CONFIG = {
-            // New Method: GitHub Repository Folder
+        // --- CONFIGURATION ---
+        const config = {
+            displayDuration: 20000,
             githubRepo: {
                 enabled: true, // Set to true to use GitHub
                 username: "rkareem12345", 
                 repoName: "Elite-Winners-Dashboard", 
-                folderPath: "" 
-            },
-
-            // Method 1: Google Drive Folder (requires setup)
-            googleDriveFolder: {
-                enabled: false,
-                folderId: "1PFvkmW5p4ztuGWKA8ZmhBkS_wWFHuawc",
-                apiKey: "YOUR_GOOGLE_API_KEY"
-            },
-            
-            // Method 2: Online folder/URL list
-            onlineFolder: {
-                enabled: false,
-                baseUrl: "https://your-server.com/images/",
-                fileList: ["image1.jpg", "image2.jpg", "image3.jpg"]
-            },
-            
-            // Method 3: Manual URL list (backup)
-            // Replaced unreliable Unsplash URLs with stable placeholder images.
-            manualUrls: [
-                "https://placehold.co/800x600/00ffff/white?text=Winner+1",
-                "https://placehold.co/800x600/ff0080/white?text=Winner+2",
-                "https://placehold.co/800x600/8000ff/white?text=Winner+3",
-                "https://placehold.co/800x600/00ff80/white?text=Winner+4",
-                "https://placehold.co/800x600/ffff00/white?text=Winner+5"
-            ]
+                folderPath: "" // Root folder. Use "subfolder" for a subfolder.
+            }
         };
-        
+
+        // --- SCRIPT LOGIC ---
         let mediaFiles = [];
-        let currentIndex = 0;
+        let currentIndex = -1;
         let countdownTimer;
         let progressTimer;
         let currentMediaElement = null;
         let isTransitioning = false;
-        const displayDuration = 10000; // 10 seconds
 
         // DOM elements
         const mediaDisplay = document.getElementById('mediaDisplay');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const mediaType = document.getElementById('mediaType');
         const progressFill = document.getElementById('progressFill');
         const countdown = document.getElementById('countdown');
 
-        // Function to get files from a GitHub repository
-        async function getGithubFiles(username, repoName, folderPath) {
+        async function fetchMediaFromGitHub() {
+            const { username, repoName, folderPath } = config.githubRepo;
+            const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents/${folderPath}`;
+            
+            console.log("Fetching media from GitHub:", apiUrl);
+            loadingOverlay.innerHTML = `<div style="color: #00ffff; text-align: center;">Fetching images from GitHub...<div class="loading-spinner" style="margin-top: 1rem;"></div></div>`;
+
             try {
-                console.log('Fetching files from GitHub...');
-                const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents/${folderPath}`;
                 const response = await fetch(apiUrl);
-                
                 if (!response.ok) {
                     throw new Error(`GitHub API error: ${response.statusText}`);
                 }
-                
-                const files = await response.json();
-
-                const media = files
-                    .filter(file => file.type === 'file' && (
-                        file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png') ||
-                        file.name.endsWith('.mp4') || file.name.endsWith('.webm') || file.name.endsWith('.ogg')
-                    ))
-                    .map(file => file.download_url); // Use the download_url for a direct link
-
-                console.log(`Found ${media.length} media files on GitHub`);
-                return media;
-
-            } catch (error) {
-                console.error('Failed to fetch from GitHub:', error);
-                return [];
-            }
-        }
-
-        // Google Drive API integration
-        async function getGoogleDriveFiles(folderId, apiKey) {
-            try {
-                console.log('Fetching Google Drive files...');
-                const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType)&key=${apiKey}`;
-                
-                const response = await fetch(url);
                 const data = await response.json();
                 
-                if (!response.ok) {
-                    throw new Error(data.error?.message || 'Failed to fetch Google Drive files');
-                }
-                
-                const imageFiles = data.files.filter(file => 
-                    file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/')
-                );
-                
-                console.log(`Found ${imageFiles.length} media files in Google Drive`);
-                
-                return imageFiles.map(file => 
-                    `https://drive.google.com/uc?export=view&id=${file.id}`
-                );
-                
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+                const files = data
+                    .filter(item => item.type === 'file' && imageExtensions.some(ext => item.name.toLowerCase().endsWith(ext)))
+                    .map(item => item.download_url);
+
+                console.log(`Found ${files.length} image(s) on GitHub.`, files);
+                return files;
             } catch (error) {
-                console.error('Google Drive API error:', error);
-                throw error;
-            }
-        }
-
-        // Auto-detect files from the repository's root
-        async function autoDetectFromRepoRoot() {
-            console.log('Trying to auto-detect files from repository root...');
-            const commonNames = [
-                'image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg',
-                'photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg', 'photo5.jpg',
-                'winner1.jpg', 'winner2.jpg', 'winner3.jpg', 'winner4.jpg', 'winner5.jpg',
-                'img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg',
-                'pic1.jpg', 'pic2.jpg', 'pic3.jpg', 'pic4.jpg', 'pic5.jpg',
-                'image1.png', 'image2.png', 'image3.png', 'image4.png', 'image5.png',
-                'photo1.png', 'photo2.png', 'photo3.png', 'photo4.png', 'photo5.png',
-                'winner1.png', 'winner2.png', 'winner3.png', 'winner4.png', 'winner5.png',
-                'video1.mp4', 'video2.mp4', 'video3.mp4', 'video4.mp4', 'video5.mp4',
-                'movie1.mp4', 'movie2.mp4', 'movie3.mp4',
-                'image6.jpg', 'image7.jpg', 'image8.jpg', 'image9.jpg', 'image10.jpg',
-                'photo6.jpg', 'photo7.jpg', 'photo8.jpg', 'photo9.jpg', 'photo10.jpg',
-                'winner6.jpg', 'winner7.jpg', 'winner8.jpg', 'winner9.jpg', 'winner10.jpg'
-            ];
-            
-            const foundFiles = [];
-            
-            for (const filename of commonNames) {
-                try {
-                    const fullPath = `./${filename}`;
-                    const response = await fetch(fullPath, { method: 'HEAD' });
-                    if (response.ok) {
-                        foundFiles.push(fullPath);
-                        console.log('Found file:', fullPath);
-                    }
-                } catch (error) {
-                    console.log('File not found:', filename);
-                }
-            }
-            
-            return foundFiles;
-        }
-
-        // Get files from online folder
-        async function getOnlineFolderFiles(baseUrl, fileList) {
-            console.log('Checking online folder...');
-            const foundFiles = [];
-            
-            for (const filename of fileList) {
-                try {
-                    const fullUrl = baseUrl + filename;
-                    const response = await fetch(fullUrl, { method: 'HEAD' });
-                    if (response.ok) {
-                        foundFiles.push(fullUrl);
-                        console.log('Found online file:', fullUrl);
-                    }
-                } catch (error) {
-                    console.log('File not found:', filename);
-                }
-            }
-            
-            return foundFiles;
-        }
-
-        // Master auto-detection function
-        async function autoDetectMedia() {
-            console.log('Starting media detection...');
-            let foundFiles = [];
-            
-            try {
-                // NEW: Method 1: Try GitHub Repo (FIXED LOGIC)
-                if (CONFIG.githubRepo.enabled) {
-                    console.log('Trying GitHub Repo...');
-                    foundFiles = await getGithubFiles(
-                        CONFIG.githubRepo.username,
-                        CONFIG.githubRepo.repoName,
-                        CONFIG.githubRepo.folderPath
-                    );
-                    if (foundFiles.length > 0) {
-                        console.log(`Found ${foundFiles.length} files from GitHub`);
-                        return foundFiles;
-                    }
-                }
-                
-                // Method 2: Fallback to a simpler detection method
-                console.log('GitHub detection failed. Trying simpler method...');
-                foundFiles = await autoDetectFromRepoRoot();
-                if (foundFiles.length > 0) {
-                    console.log(`Found ${foundFiles.length} files with simpler detection`);
-                    return foundFiles;
-                }
-
-                // Old Methods are now fallbacks
-                if (CONFIG.googleDriveFolder.enabled && CONFIG.googleDriveFolder.apiKey !== "YOUR_GOOGLE_API_KEY") {
-                    console.log('Trying Google Drive...');
-                    foundFiles = await getGoogleDriveFiles(
-                        CONFIG.googleDriveFolder.folderId, 
-                        CONFIG.googleDriveFolder.apiKey
-                    );
-                    if (foundFiles.length > 0) {
-                        console.log(`Found ${foundFiles.length} files from Google Drive`);
-                        return foundFiles;
-                    }
-                }
-                
-                if (CONFIG.onlineFolder.enabled) {
-                    console.log('Trying online folder...');
-                    foundFiles = await getOnlineFolderFiles(
-                        CONFIG.onlineFolder.baseUrl,
-                        CONFIG.onlineFolder.fileList
-                    );
-                    if (foundFiles.length > 0) {
-                        console.log(`Found ${foundFiles.length} files from online folder`);
-                        return foundFiles;
-                    }
-                }
-                
-                if (CONFIG.manualUrls.length > 0) {
-                    console.log('Using manual URL fallback...');
-                    return CONFIG.manualUrls;
-                }
-                
+                console.error("Failed to fetch from GitHub:", error);
+                loadingOverlay.innerHTML = `<div style="color: #ff0080; text-align: center;">Error fetching from GitHub.<br><small>${error.message}</small></div>`;
                 return [];
-                
-            } catch (error) {
-                console.error('Error in auto-detection:', error);
-                return CONFIG.manualUrls;
             }
         }
 
-        // Alternative: If you use a file input to select multiple files
-        function setupFileInput() {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.multiple = true;
-            fileInput.accept = 'image/*,video/*';
-            fileInput.style.display = 'none';
-            document.body.appendChild(fileInput);
-            
-            const selectButton = document.createElement('button');
-            selectButton.textContent = 'Select Images/Videos';
-            selectButton.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 10px 20px;
-                background: rgba(0, 255, 255, 0.2);
-                border: 1px solid #00ffff;
-                color: #00ffff;
-                border-radius: 5px;
-                cursor: pointer;
-                backdrop-filter: blur(10px);
-                z-index: 1000;
-            `;
-            
-            selectButton.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            fileInput.addEventListener('change', (event) => {
-                const files = Array.from(event.target.files);
-                mediaFiles = files.map(file => URL.createObjectURL(file));
-                console.log('Files selected:', mediaFiles.length);
-                currentIndex = 0;
-                if (mediaFiles.length > 0) {
-                    showMedia();
-                }
-                selectButton.style.display = 'none';
-            });
-            
-            document.body.appendChild(selectButton);
-        }
-
-        // Check if file is video
-        function isVideoFile(url) {
-            const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m4v'];
-            return videoExtensions.some(ext => url.toLowerCase().includes(ext));
-        }
-
-        // Create media element
-        function createMediaElement(src) {
-            const isVideo = isVideoFile(src);
-            const element = document.createElement(isVideo ? 'video' : 'img');
-            
-            element.className = 'media-item';
-            element.src = src;
-            
-            if (isVideo) {
-                element.muted = true;
-                element.autoplay = true;
-                element.loop = true;
-                element.playsInline = true;
-                element.controls = false;
-                mediaType.textContent = 'Video';
-            } else {
-                element.alt = 'Winner Image';
-                mediaType.textContent = 'Photo';
-                if (src.startsWith('http')) {
-                    element.crossOrigin = 'anonymous';
-                }
+        function showNextMedia() {
+            if (mediaFiles.length === 0) {
+                loadingOverlay.innerHTML = '<div style="color: #ff0080;">No media files found!</div>';
+                return;
             }
             
-            return element;
-        }
-
-        // Show media with smooth transition
-        function showMedia() {
-            if (isTransitioning || mediaFiles.length === 0) return;
-
+            if (isTransitioning) {
+                console.log("Transition already in progress, skipping call.");
+                return;
+            }
             isTransitioning = true;
             
-            if (countdownTimer) clearInterval(countdownTimer);
-            if (progressTimer) clearInterval(progressTimer);
+            clearInterval(countdownTimer);
+            clearInterval(progressTimer);
 
+            currentIndex = (currentIndex + 1) % mediaFiles.length;
             const mediaFile = mediaFiles[currentIndex];
-            console.log('Loading media:', mediaFile, 'Index:', currentIndex);
+            console.log(`Loading media [${currentIndex + 1}/${mediaFiles.length}]: ${mediaFile}`);
 
-            const newMediaElement = createMediaElement(mediaFile);
-            
-            const handleLoad = () => {
+            loadingOverlay.style.opacity = '1';
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
+
+            const newMediaElement = document.createElement('img');
+
+            newMediaElement.onload = () => {
                 console.log('Media loaded successfully:', mediaFile);
-                loadingOverlay.style.display = 'none';
                 
                 if (currentMediaElement) {
+                    currentMediaElement.classList.remove('active');
                     currentMediaElement.classList.add('fade-out');
-                    setTimeout(() => {
-                        if (currentMediaElement && currentMediaElement.parentNode) {
-                            currentMediaElement.parentNode.removeChild(currentMediaElement);
-                        }
-                    }, 800);
+                    const oldElement = currentMediaElement;
+                    setTimeout(() => oldElement.remove(), 1200);
                 }
                 
-                newMediaElement.classList.add('active');
+                mediaDisplay.appendChild(newMediaElement);
                 currentMediaElement = newMediaElement;
-                isTransitioning = false;
-                
+
+                setTimeout(() => {
+                    loadingOverlay.style.opacity = '0';
+                    loadingOverlay.style.display = 'none';
+                    newMediaElement.classList.add('active');
+                    isTransitioning = false; 
+                }, 100);
+
                 startCountdown();
             };
 
-            const handleError = (error) => {
-                console.error('Failed to load media:', mediaFile, error);
-                loadingOverlay.innerHTML = `<div style="color: #ff0080; text-align: center;">Failed to load: ${mediaFile}<br><small>Trying next item...</small></div>`;
-                
-                setTimeout(() => {
-                    loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
-                    loadingOverlay.style.display = 'flex';
-                    isTransitioning = false;
-                    nextMedia();
-                }, 2000);
+            newMediaElement.onerror = (e) => {
+                console.error('Failed to load media:', mediaFile, e);
+                isTransitioning = false;
+                setTimeout(showNextMedia, 2000);
             };
 
-            loadingOverlay.style.display = 'flex';
-            loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
-            
-            mediaDisplay.appendChild(newMediaElement);
-            
-            if (newMediaElement.tagName === 'VIDEO') {
-                newMediaElement.addEventListener('canplay', handleLoad, { once: true });
-                newMediaElement.addEventListener('error', handleError, { once: true });
-                
-                setTimeout(() => {
-                    if (isTransitioning && newMediaElement.readyState >= 2) {
-                        handleLoad();
-                    }
-                }, 3000);
-            } else {
-                newMediaElement.addEventListener('load', handleLoad, { once: true });
-                newMediaElement.addEventListener('error', handleError, { once: true });
-                
-                setTimeout(() => {
-                    if (isTransitioning && newMediaElement.complete) {
-                        handleLoad();
-                    } else if (isTransitioning) {
-                        handleError('Timeout');
-                    }
-                }, 5000);
-            }
+            newMediaElement.className = 'media-item';
+            newMediaElement.alt = 'Winner Image';
+            newMediaElement.crossOrigin = 'anonymous';
+            newMediaElement.src = mediaFile;
         }
 
-        // Start countdown and progress
         function startCountdown() {
-            let timeLeft = 10;
-            let progressStep = 0;
-            
+            let timeLeft = config.displayDuration / 1000;
+            let timePassed = 0;
+            const updateInterval = 50;
+
             countdown.textContent = timeLeft + 's';
+            progressFill.style.transition = 'none';
             progressFill.style.width = '0%';
             
-            console.log('Starting countdown for:', mediaFiles[currentIndex]);
-            
+            console.log(`Starting ${timeLeft}s countdown for: ${mediaFiles[currentIndex]}`);
+
             progressTimer = setInterval(() => {
-                progressStep += 100;
-                const progressPercent = (progressStep / displayDuration) * 100;
+                timePassed += updateInterval;
+                const progressPercent = (timePassed / config.displayDuration) * 100;
                 progressFill.style.width = Math.min(progressPercent, 100) + '%';
-            }, 100);
+            }, updateInterval);
             
             countdownTimer = setInterval(() => {
                 timeLeft--;
@@ -700,93 +399,38 @@
                 if (timeLeft <= 0) {
                     clearInterval(countdownTimer);
                     clearInterval(progressTimer);
-                    nextMedia();
+                    if (!isTransitioning) {
+                        showNextMedia();
+                    }
                 }
             }, 1000);
         }
 
-        // Move to next media
-        function nextMedia() {
-            if (mediaFiles.length === 0) return;
-            
-            console.log('Moving to next media. Current index:', currentIndex, 'Total files:', mediaFiles.length);
-            
-            currentIndex = (currentIndex + 1) % mediaFiles.length;
-            
-            console.log('New index:', currentIndex);
-            
-            setTimeout(() => {
-                showMedia();
-            }, 500);
-        }
-
-        // Initialize gallery with auto-detection
         async function initialize() {
             console.log('Initializing gallery...');
+            if (config.githubRepo.enabled) {
+                mediaFiles = await fetchMediaFromGitHub();
+            }
             
-            loadingOverlay.style.display = 'flex';
-            loadingOverlay.innerHTML = '<div style="color: #00ffff; text-align: center; font-size: 1.2rem;">🔍 Auto-detecting media files...<br><div class="loading-spinner" style="margin-top: 1rem;"></div></div>';
-            
-            try {
-                mediaFiles = await autoDetectMedia();
-                
-                if (mediaFiles.length === 0) {
-                    loadingOverlay.innerHTML = `
+            if (mediaFiles.length > 0) {
+                showNextMedia();
+            } else {
+                console.error('No media files to display.');
+                if (!config.githubRepo.enabled) {
+                     loadingOverlay.innerHTML = `
                         <div style="color: #ff0080; text-align: center; font-size: 1.2rem;">
-                            📁 No media files found!<br>
+                            ❌ No media files configured.<br>
                             <small style="color: #00ffff; margin-top: 1rem; display: block;">
-                                Please ensure the correct GitHub repo settings are entered or add photos to your GitHub folder.
+                                Please enable GitHub fetching or add files manually.
                             </small>
                         </div>
                     `;
-                    
-                    setTimeout(() => {
-                        setupFileInput();
-                    }, 2000);
-                    
-                    return;
-                }
-                
-                console.log(`Found ${mediaFiles.length} media files, starting slideshow...`);
-                loadingOverlay.innerHTML = `
-                    <div style="color: #00ff80; text-align: center; font-size: 1.2rem;">
-                        ✅ Found ${mediaFiles.length} files!<br>
-                        <small>Starting slideshow...</small>
-                    </div>
-                `;
-                
-                setTimeout(() => {
-                    showMedia();
-                }, 2000);
-                
-            } catch (error) {
-                console.error('Error initializing:', error);
-                loadingOverlay.innerHTML = `
-                    <div style="color: #ff0080; text-align: center;">
-                        ❌ Error detecting files<br>
-                        <small>Check console for details</small>
-                    </div>
-                `;
-                
-                setTimeout(() => {
-                    setupFileInput();
-                    }, 2000);
                 }
             }
+        }
 
-        // Handle page visibility (pause/resume videos when tab changes)
-        document.addEventListener('visibilitychange', () => {
-            if (currentMediaElement && currentMediaElement.tagName === 'VIDEO') {
-                if (document.hidden) {
-                    currentMediaElement.pause();
-                } else {
-                    currentMediaElement.play();
-                }
-            }
-        });
-
-        // Start the gallery
-        initialize();
+        window.onload = initialize;
     </script>
 </body>
 </html>
+
