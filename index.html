@@ -29,8 +29,8 @@
             width: 100%;
             height: 100%;
             background: radial-gradient(circle at 20% 80%, #120458 0%, transparent 50%),
-                       radial-gradient(circle at 80% 20%, #1e0a3c 0%, transparent 50%),
-                       linear-gradient(135deg, #000 0%, #0a0a0a 100%);
+                        radial-gradient(circle at 80% 20%, #1e0a3c 0%, transparent 50%),
+                        linear-gradient(135deg, #000 0%, #0a0a0a 100%);
             z-index: 1;
         }
 
@@ -140,12 +140,12 @@
         .media-item {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Changed from cover to contain to show full image */
+            object-fit: contain;
             border-radius: 20px;
             transition: all 0.8s ease;
             opacity: 0;
             transform: scale(1.1);
-            background: rgba(0, 0, 0, 0.3); /* Background for letterboxing */
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .media-item.active {
@@ -160,15 +160,8 @@
 
         /* Video specific styles */
         video.media-item {
-            object-fit: contain; /* Changed to contain for videos too */
+            object-fit: contain;
         }
-
-        /* Alternative styling for cover mode - uncomment if you want to crop images */
-        /*
-        .media-item {
-            object-fit: cover;
-        }
-        */
 
         /* Progress indicator */
         .progress-container {
@@ -303,29 +296,38 @@
     </div>
 
     <script>
-        // AUTO-DETECTION SYSTEM - Multiple methods to find media
-        
         // CONFIGURATION - Choose your method:
         const CONFIG = {
+            // New Method: GitHub Repository Folder
+            githubRepo: {
+                enabled: true, // Set to true to use GitHub
+                username: "YOUR_GITHUB_USERNAME", // <-- REPLACE THIS WITH YOUR USERNAME
+                repoName: "YOUR_REPOSITORY_NAME", // <-- REPLACE THIS WITH YOUR REPO NAME
+                folderPath: "photos" // <-- REPLACE THIS WITH THE FOLDER NAME
+            },
+
             // Method 1: Google Drive Folder (requires setup)
             googleDriveFolder: {
-                enabled: false, // Set to true to use Google Drive
-                folderId: "1PFvkmW5p4ztuGWKA8ZmhBkS_wWFHuawc", // Your folder ID
-                apiKey: "YOUR_GOOGLE_API_KEY" // Get from Google Cloud Console
+                enabled: false,
+                folderId: "1PFvkmW5p4ztuGWKA8ZmhBkS_wWFHuawc",
+                apiKey: "YOUR_GOOGLE_API_KEY"
             },
             
             // Method 2: Online folder/URL list
             onlineFolder: {
-                enabled: false, // Set to true to use online URLs
-                baseUrl: "https://your-server.com/images/", // Your image server
-                fileList: ["image1.jpg", "image2.jpg", "image3.jpg"] // List your files
+                enabled: false,
+                baseUrl: "https://your-server.com/images/",
+                fileList: ["image1.jpg", "image2.jpg", "image3.jpg"]
             },
             
             // Method 3: Manual URL list (backup)
+            // Replaced unreliable Unsplash URLs with stable placeholder images.
             manualUrls: [
-                // Add your direct image URLs here as fallback
-                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop",
-                "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&h=800&fit=crop"
+                "https://placehold.co/800x600/00ffff/white?text=Winner+1",
+                "https://placehold.co/800x600/ff0080/white?text=Winner+2",
+                "https://placehold.co/800x600/8000ff/white?text=Winner+3",
+                "https://placehold.co/800x600/00ff80/white?text=Winner+4",
+                "https://placehold.co/800x600/ffff00/white?text=Winner+5"
             ]
         };
         
@@ -343,6 +345,35 @@
         const mediaType = document.getElementById('mediaType');
         const progressFill = document.getElementById('progressFill');
         const countdown = document.getElementById('countdown');
+
+        // Function to get files from a GitHub repository
+        async function getGithubFiles(username, repoName, folderPath) {
+            try {
+                console.log('Fetching files from GitHub...');
+                const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents/${folderPath}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.statusText}`);
+                }
+                
+                const files = await response.json();
+
+                const media = files
+                    .filter(file => file.type === 'file' && (
+                        file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png') ||
+                        file.name.endsWith('.mp4') || file.name.endsWith('.webm') || file.name.endsWith('.ogg')
+                    ))
+                    .map(file => file.download_url); // Use the download_url for a direct link
+
+                console.log(`Found ${media.length} media files on GitHub`);
+                return media;
+
+            } catch (error) {
+                console.error('Failed to fetch from GitHub:', error);
+                return [];
+            }
+        }
 
         // Google Drive API integration
         async function getGoogleDriveFiles(folderId, apiKey) {
@@ -376,26 +407,17 @@
         // Auto-detect local images in folder
         async function autoDetectLocalMedia() {
             console.log('Starting local auto-detection...');
-            
-            // Common image and video file names to check
             const commonNames = [
-                // Images
                 'image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg',
                 'photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg', 'photo5.jpg',
                 'winner1.jpg', 'winner2.jpg', 'winner3.jpg', 'winner4.jpg', 'winner5.jpg',
                 'img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg',
                 'pic1.jpg', 'pic2.jpg', 'pic3.jpg', 'pic4.jpg', 'pic5.jpg',
-                
-                // PNG versions
                 'image1.png', 'image2.png', 'image3.png', 'image4.png', 'image5.png',
                 'photo1.png', 'photo2.png', 'photo3.png', 'photo4.png', 'photo5.png',
                 'winner1.png', 'winner2.png', 'winner3.png', 'winner4.png', 'winner5.png',
-                
-                // Videos
                 'video1.mp4', 'video2.mp4', 'video3.mp4', 'video4.mp4', 'video5.mp4',
                 'movie1.mp4', 'movie2.mp4', 'movie3.mp4',
-                
-                // More numbers
                 'image6.jpg', 'image7.jpg', 'image8.jpg', 'image9.jpg', 'image10.jpg',
                 'photo6.jpg', 'photo7.jpg', 'photo8.jpg', 'photo9.jpg', 'photo10.jpg',
                 'winner6.jpg', 'winner7.jpg', 'winner8.jpg', 'winner9.jpg', 'winner10.jpg'
@@ -404,7 +426,6 @@
             const foundFiles = [];
             const foldersToCheck = ['./', './images/', './media/', './photos/', './videos/'];
             
-            // Check multiple folders
             for (const folder of foldersToCheck) {
                 for (const filename of commonNames) {
                     try {
@@ -415,7 +436,6 @@
                             console.log('Found file:', fullPath);
                         }
                     } catch (error) {
-                        // File doesn't exist, continue
                     }
                 }
             }
@@ -450,7 +470,21 @@
             let foundFiles = [];
             
             try {
-                // Method 1: Try Google Drive if enabled
+                // NEW: Method 1: Try GitHub Repo
+                if (CONFIG.githubRepo.enabled && CONFIG.githubRepo.username !== "YOUR_GITHUB_USERNAME" && CONFIG.githubRepo.repoName !== "YOUR_REPOSITORY_NAME") {
+                    console.log('Trying GitHub Repo...');
+                    foundFiles = await getGithubFiles(
+                        CONFIG.githubRepo.username,
+                        CONFIG.githubRepo.repoName,
+                        CONFIG.githubRepo.folderPath
+                    );
+                    if (foundFiles.length > 0) {
+                        console.log(`Found ${foundFiles.length} files from GitHub`);
+                        return foundFiles;
+                    }
+                }
+                
+                // Method 2: Try Google Drive if enabled
                 if (CONFIG.googleDriveFolder.enabled && CONFIG.googleDriveFolder.apiKey !== "YOUR_GOOGLE_API_KEY") {
                     console.log('Trying Google Drive...');
                     foundFiles = await getGoogleDriveFiles(
@@ -463,7 +497,7 @@
                     }
                 }
                 
-                // Method 2: Try online folder if enabled
+                // Method 3: Try online folder if enabled
                 if (CONFIG.onlineFolder.enabled) {
                     console.log('Trying online folder...');
                     foundFiles = await getOnlineFolderFiles(
@@ -476,7 +510,7 @@
                     }
                 }
                 
-                // Method 3: Try local auto-detection
+                // Method 4: Try local auto-detection
                 console.log('Trying local auto-detection...');
                 foundFiles = await autoDetectLocalMedia();
                 if (foundFiles.length > 0) {
@@ -484,7 +518,7 @@
                     return foundFiles;
                 }
                 
-                // Method 4: Fallback to manual URLs
+                // Method 5: Fallback to manual URLs
                 if (CONFIG.manualUrls.length > 0) {
                     console.log('Using manual URL fallback...');
                     return CONFIG.manualUrls;
@@ -494,14 +528,12 @@
                 
             } catch (error) {
                 console.error('Error in auto-detection:', error);
-                // Return manual URLs as final fallback
                 return CONFIG.manualUrls;
             }
         }
 
         // Alternative: If you use a file input to select multiple files
         function setupFileInput() {
-            // Create a hidden file input
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.multiple = true;
@@ -509,7 +541,6 @@
             fileInput.style.display = 'none';
             document.body.appendChild(fileInput);
             
-            // Add a button to trigger file selection
             const selectButton = document.createElement('button');
             selectButton.textContent = 'Select Images/Videos';
             selectButton.style.cssText = `
@@ -538,7 +569,7 @@
                 if (mediaFiles.length > 0) {
                     showMedia();
                 }
-                selectButton.style.display = 'none'; // Hide button after selection
+                selectButton.style.display = 'none';
             });
             
             document.body.appendChild(selectButton);
@@ -559,7 +590,7 @@
             element.src = src;
             
             if (isVideo) {
-                element.muted = true; // For autoplay to work
+                element.muted = true;
                 element.autoplay = true;
                 element.loop = true;
                 element.playsInline = true;
@@ -568,7 +599,6 @@
             } else {
                 element.alt = 'Winner Image';
                 mediaType.textContent = 'Photo';
-                // Add crossorigin for external images
                 if (src.startsWith('http')) {
                     element.crossOrigin = 'anonymous';
                 }
@@ -583,22 +613,18 @@
 
             isTransitioning = true;
             
-            // Clear any existing timers
             if (countdownTimer) clearInterval(countdownTimer);
             if (progressTimer) clearInterval(progressTimer);
 
             const mediaFile = mediaFiles[currentIndex];
             console.log('Loading media:', mediaFile, 'Index:', currentIndex);
 
-            // Create new media element
             const newMediaElement = createMediaElement(mediaFile);
             
-            // Handle successful loading
             const handleLoad = () => {
                 console.log('Media loaded successfully:', mediaFile);
                 loadingOverlay.style.display = 'none';
                 
-                // Remove old media element
                 if (currentMediaElement) {
                     currentMediaElement.classList.add('fade-out');
                     setTimeout(() => {
@@ -608,21 +634,17 @@
                     }, 800);
                 }
                 
-                // Show new media
                 newMediaElement.classList.add('active');
                 currentMediaElement = newMediaElement;
                 isTransitioning = false;
                 
-                // Start countdown
                 startCountdown();
             };
 
-            // Handle loading errors
             const handleError = (error) => {
                 console.error('Failed to load media:', mediaFile, error);
                 loadingOverlay.innerHTML = `<div style="color: #ff0080; text-align: center;">Failed to load: ${mediaFile}<br><small>Trying next item...</small></div>`;
                 
-                // Try next media after short delay
                 setTimeout(() => {
                     loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
                     loadingOverlay.style.display = 'flex';
@@ -631,19 +653,15 @@
                 }, 2000);
             };
 
-            // Show loading
             loadingOverlay.style.display = 'flex';
             loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
             
-            // Add to display
             mediaDisplay.appendChild(newMediaElement);
             
-            // Handle load events
             if (newMediaElement.tagName === 'VIDEO') {
                 newMediaElement.addEventListener('canplay', handleLoad, { once: true });
                 newMediaElement.addEventListener('error', handleError, { once: true });
                 
-                // Fallback timeout for videos
                 setTimeout(() => {
                     if (isTransitioning && newMediaElement.readyState >= 2) {
                         handleLoad();
@@ -653,7 +671,6 @@
                 newMediaElement.addEventListener('load', handleLoad, { once: true });
                 newMediaElement.addEventListener('error', handleError, { once: true });
                 
-                // Fallback timeout for images
                 setTimeout(() => {
                     if (isTransitioning && newMediaElement.complete) {
                         handleLoad();
@@ -674,14 +691,12 @@
             
             console.log('Starting countdown for:', mediaFiles[currentIndex]);
             
-            // Update every 100ms for smooth progress
             progressTimer = setInterval(() => {
                 progressStep += 100;
                 const progressPercent = (progressStep / displayDuration) * 100;
                 progressFill.style.width = Math.min(progressPercent, 100) + '%';
             }, 100);
             
-            // Update countdown every second
             countdownTimer = setInterval(() => {
                 timeLeft--;
                 countdown.textContent = timeLeft + 's';
@@ -700,12 +715,10 @@
             
             console.log('Moving to next media. Current index:', currentIndex, 'Total files:', mediaFiles.length);
             
-            // Move to next index (loops back to 0 after last item)
             currentIndex = (currentIndex + 1) % mediaFiles.length;
             
             console.log('New index:', currentIndex);
             
-            // Small delay for smooth transition
             setTimeout(() => {
                 showMedia();
             }, 500);
@@ -715,12 +728,10 @@
         async function initialize() {
             console.log('Initializing gallery...');
             
-            // Show loading
             loadingOverlay.style.display = 'flex';
             loadingOverlay.innerHTML = '<div style="color: #00ffff; text-align: center; font-size: 1.2rem;">🔍 Auto-detecting media files...<br><div class="loading-spinner" style="margin-top: 1rem;"></div></div>';
             
             try {
-                // Auto-detect media files
                 mediaFiles = await autoDetectMedia();
                 
                 if (mediaFiles.length === 0) {
@@ -728,16 +739,11 @@
                         <div style="color: #ff0080; text-align: center; font-size: 1.2rem;">
                             📁 No media files found!<br>
                             <small style="color: #00ffff; margin-top: 1rem; display: block;">
-                                Put your images in one of these locations:<br>
-                                • Same folder as index.html (image1.jpg, image2.jpg, etc.)<br>
-                                • ./images/ folder (image1.jpg, image2.jpg, etc.)<br>
-                                • ./media/ folder (image1.jpg, image2.jpg, etc.)<br><br>
-                                Or use the file selector button that will appear.
+                                Please ensure the correct GitHub repo settings are entered or add photos to your GitHub folder.
                             </small>
                         </div>
                     `;
                     
-                    // Setup file input as fallback
                     setTimeout(() => {
                         setupFileInput();
                     }, 2000);
@@ -753,7 +759,6 @@
                     </div>
                 `;
                 
-                // Start slideshow after brief delay
                 setTimeout(() => {
                     showMedia();
                 }, 2000);
@@ -767,7 +772,6 @@
                     </div>
                 `;
                 
-                // Setup file input as fallback
                 setTimeout(() => {
                     setupFileInput();
                 }, 2000);
