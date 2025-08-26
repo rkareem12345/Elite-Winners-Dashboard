@@ -303,7 +303,7 @@
                 enabled: true, // Set to true to use GitHub
                 username: "YOUR_GITHUB_USERNAME", // <-- REPLACE THIS WITH YOUR USERNAME
                 repoName: "YOUR_REPOSITORY_NAME", // <-- REPLACE THIS WITH YOUR REPO NAME
-                folderPath: "photos" // <-- REPLACE THIS WITH THE FOLDER NAME
+                folderPath: "" // <-- REPLACE THIS WITH THE FOLDER NAME
             },
 
             // Method 1: Google Drive Folder (requires setup)
@@ -774,9 +774,9 @@
                 
                 setTimeout(() => {
                     setupFileInput();
-                }, 2000);
+                    }, 2000);
+                }
             }
-        }
 
         // Handle page visibility (pause/resume videos when tab changes)
         document.addEventListener('visibilitychange', () => {
