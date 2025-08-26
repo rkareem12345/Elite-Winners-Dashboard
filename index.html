@@ -303,21 +303,33 @@
     </div>
 
     <script>
-        // Media files - Add your photos and videos here
-        // For photos: just add the path/URL  
-        // For videos: add the path/URL (supports mp4, webm, mov, etc.)
-        const mediaFiles = [
-            // Add your image/video URLs here - replace these examples
-            "https://screenshot.googleplex.com/45cpG9adcXgv4PU.png",
-            "https://screenshot.googleplex.com/kF6GUrbfVATTVUZ.png", 
-            "https://screenshot.googleplex.com/44TSmfmRcWFTFAT.png"
+        // AUTO-DETECTION SYSTEM - Multiple methods to find media
+        
+        // CONFIGURATION - Choose your method:
+        const CONFIG = {
+            // Method 1: Google Drive Folder (requires setup)
+            googleDriveFolder: {
+                enabled: false, // Set to true to use Google Drive
+                folderId: "1PFvkmW5p4ztuGWKA8ZmhBkS_wWFHuawc", // Your folder ID
+                apiKey: "YOUR_GOOGLE_API_KEY" // Get from Google Cloud Console
+            },
             
-            // Local files example:
-            // "./winner1.jpg",
-            // "./winner2.jpg", 
-            // "./video1.mp4"
-        ];
-
+            // Method 2: Online folder/URL list
+            onlineFolder: {
+                enabled: false, // Set to true to use online URLs
+                baseUrl: "https://your-server.com/images/", // Your image server
+                fileList: ["image1.jpg", "image2.jpg", "image3.jpg"] // List your files
+            },
+            
+            // Method 3: Manual URL list (backup)
+            manualUrls: [
+                // Add your direct image URLs here as fallback
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop",
+                "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&h=800&fit=crop"
+            ]
+        };
+        
+        let mediaFiles = [];
         let currentIndex = 0;
         let countdownTimer;
         let progressTimer;
@@ -331,6 +343,206 @@
         const mediaType = document.getElementById('mediaType');
         const progressFill = document.getElementById('progressFill');
         const countdown = document.getElementById('countdown');
+
+        // Google Drive API integration
+        async function getGoogleDriveFiles(folderId, apiKey) {
+            try {
+                console.log('Fetching Google Drive files...');
+                const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType)&key=${apiKey}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Failed to fetch Google Drive files');
+                }
+                
+                const imageFiles = data.files.filter(file => 
+                    file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/')
+                );
+                
+                console.log(`Found ${imageFiles.length} media files in Google Drive`);
+                
+                return imageFiles.map(file => 
+                    `https://drive.google.com/uc?export=view&id=${file.id}`
+                );
+                
+            } catch (error) {
+                console.error('Google Drive API error:', error);
+                throw error;
+            }
+        }
+
+        // Auto-detect local images in folder
+        async function autoDetectLocalMedia() {
+            console.log('Starting local auto-detection...');
+            
+            // Common image and video file names to check
+            const commonNames = [
+                // Images
+                'image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg',
+                'photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg', 'photo5.jpg',
+                'winner1.jpg', 'winner2.jpg', 'winner3.jpg', 'winner4.jpg', 'winner5.jpg',
+                'img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg',
+                'pic1.jpg', 'pic2.jpg', 'pic3.jpg', 'pic4.jpg', 'pic5.jpg',
+                
+                // PNG versions
+                'image1.png', 'image2.png', 'image3.png', 'image4.png', 'image5.png',
+                'photo1.png', 'photo2.png', 'photo3.png', 'photo4.png', 'photo5.png',
+                'winner1.png', 'winner2.png', 'winner3.png', 'winner4.png', 'winner5.png',
+                
+                // Videos
+                'video1.mp4', 'video2.mp4', 'video3.mp4', 'video4.mp4', 'video5.mp4',
+                'movie1.mp4', 'movie2.mp4', 'movie3.mp4',
+                
+                // More numbers
+                'image6.jpg', 'image7.jpg', 'image8.jpg', 'image9.jpg', 'image10.jpg',
+                'photo6.jpg', 'photo7.jpg', 'photo8.jpg', 'photo9.jpg', 'photo10.jpg',
+                'winner6.jpg', 'winner7.jpg', 'winner8.jpg', 'winner9.jpg', 'winner10.jpg'
+            ];
+            
+            const foundFiles = [];
+            const foldersToCheck = ['./', './images/', './media/', './photos/', './videos/'];
+            
+            // Check multiple folders
+            for (const folder of foldersToCheck) {
+                for (const filename of commonNames) {
+                    try {
+                        const fullPath = `${folder}${filename}`;
+                        const response = await fetch(fullPath, { method: 'HEAD' });
+                        if (response.ok) {
+                            foundFiles.push(fullPath);
+                            console.log('Found file:', fullPath);
+                        }
+                    } catch (error) {
+                        // File doesn't exist, continue
+                    }
+                }
+            }
+            
+            return foundFiles;
+        }
+
+        // Get files from online folder
+        async function getOnlineFolderFiles(baseUrl, fileList) {
+            console.log('Checking online folder...');
+            const foundFiles = [];
+            
+            for (const filename of fileList) {
+                try {
+                    const fullUrl = baseUrl + filename;
+                    const response = await fetch(fullUrl, { method: 'HEAD' });
+                    if (response.ok) {
+                        foundFiles.push(fullUrl);
+                        console.log('Found online file:', fullUrl);
+                    }
+                } catch (error) {
+                    console.log('File not found:', filename);
+                }
+            }
+            
+            return foundFiles;
+        }
+
+        // Master auto-detection function
+        async function autoDetectMedia() {
+            console.log('Starting media detection...');
+            let foundFiles = [];
+            
+            try {
+                // Method 1: Try Google Drive if enabled
+                if (CONFIG.googleDriveFolder.enabled && CONFIG.googleDriveFolder.apiKey !== "YOUR_GOOGLE_API_KEY") {
+                    console.log('Trying Google Drive...');
+                    foundFiles = await getGoogleDriveFiles(
+                        CONFIG.googleDriveFolder.folderId, 
+                        CONFIG.googleDriveFolder.apiKey
+                    );
+                    if (foundFiles.length > 0) {
+                        console.log(`Found ${foundFiles.length} files from Google Drive`);
+                        return foundFiles;
+                    }
+                }
+                
+                // Method 2: Try online folder if enabled
+                if (CONFIG.onlineFolder.enabled) {
+                    console.log('Trying online folder...');
+                    foundFiles = await getOnlineFolderFiles(
+                        CONFIG.onlineFolder.baseUrl,
+                        CONFIG.onlineFolder.fileList
+                    );
+                    if (foundFiles.length > 0) {
+                        console.log(`Found ${foundFiles.length} files from online folder`);
+                        return foundFiles;
+                    }
+                }
+                
+                // Method 3: Try local auto-detection
+                console.log('Trying local auto-detection...');
+                foundFiles = await autoDetectLocalMedia();
+                if (foundFiles.length > 0) {
+                    console.log(`Found ${foundFiles.length} local files`);
+                    return foundFiles;
+                }
+                
+                // Method 4: Fallback to manual URLs
+                if (CONFIG.manualUrls.length > 0) {
+                    console.log('Using manual URL fallback...');
+                    return CONFIG.manualUrls;
+                }
+                
+                return [];
+                
+            } catch (error) {
+                console.error('Error in auto-detection:', error);
+                // Return manual URLs as final fallback
+                return CONFIG.manualUrls;
+            }
+        }
+
+        // Alternative: If you use a file input to select multiple files
+        function setupFileInput() {
+            // Create a hidden file input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.multiple = true;
+            fileInput.accept = 'image/*,video/*';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+            
+            // Add a button to trigger file selection
+            const selectButton = document.createElement('button');
+            selectButton.textContent = 'Select Images/Videos';
+            selectButton.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background: rgba(0, 255, 255, 0.2);
+                border: 1px solid #00ffff;
+                color: #00ffff;
+                border-radius: 5px;
+                cursor: pointer;
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+            `;
+            
+            selectButton.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (event) => {
+                const files = Array.from(event.target.files);
+                mediaFiles = files.map(file => URL.createObjectURL(file));
+                console.log('Files selected:', mediaFiles.length);
+                currentIndex = 0;
+                if (mediaFiles.length > 0) {
+                    showMedia();
+                }
+                selectButton.style.display = 'none'; // Hide button after selection
+            });
+            
+            document.body.appendChild(selectButton);
+        }
 
         // Check if file is video
         function isVideoFile(url) {
@@ -499,17 +711,67 @@
             }, 500);
         }
 
-        // Initialize gallery
-        function initialize() {
-            if (mediaFiles.length === 0) {
-                loadingOverlay.innerHTML = '<div style="color: #ff0080; text-align: center; font-size: 1.5rem;">No media files found!<br><small>Add your photos/videos to the mediaFiles array</small></div>';
-                return;
-            }
+        // Initialize gallery with auto-detection
+        async function initialize() {
+            console.log('Initializing gallery...');
             
-            // Start with first media after brief delay
-            setTimeout(() => {
-                showMedia();
-            }, 1500);
+            // Show loading
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.innerHTML = '<div style="color: #00ffff; text-align: center; font-size: 1.2rem;">🔍 Auto-detecting media files...<br><div class="loading-spinner" style="margin-top: 1rem;"></div></div>';
+            
+            try {
+                // Auto-detect media files
+                mediaFiles = await autoDetectMedia();
+                
+                if (mediaFiles.length === 0) {
+                    loadingOverlay.innerHTML = `
+                        <div style="color: #ff0080; text-align: center; font-size: 1.2rem;">
+                            📁 No media files found!<br>
+                            <small style="color: #00ffff; margin-top: 1rem; display: block;">
+                                Put your images in one of these locations:<br>
+                                • Same folder as index.html (image1.jpg, image2.jpg, etc.)<br>
+                                • ./images/ folder (image1.jpg, image2.jpg, etc.)<br>
+                                • ./media/ folder (image1.jpg, image2.jpg, etc.)<br><br>
+                                Or use the file selector button that will appear.
+                            </small>
+                        </div>
+                    `;
+                    
+                    // Setup file input as fallback
+                    setTimeout(() => {
+                        setupFileInput();
+                    }, 2000);
+                    
+                    return;
+                }
+                
+                console.log(`Found ${mediaFiles.length} media files, starting slideshow...`);
+                loadingOverlay.innerHTML = `
+                    <div style="color: #00ff80; text-align: center; font-size: 1.2rem;">
+                        ✅ Found ${mediaFiles.length} files!<br>
+                        <small>Starting slideshow...</small>
+                    </div>
+                `;
+                
+                // Start slideshow after brief delay
+                setTimeout(() => {
+                    showMedia();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error initializing:', error);
+                loadingOverlay.innerHTML = `
+                    <div style="color: #ff0080; text-align: center;">
+                        ❌ Error detecting files<br>
+                        <small>Check console for details</small>
+                    </div>
+                `;
+                
+                // Setup file input as fallback
+                setTimeout(() => {
+                    setupFileInput();
+                }, 2000);
+            }
         }
 
         // Handle page visibility (pause/resume videos when tab changes)
